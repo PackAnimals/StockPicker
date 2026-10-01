@@ -1,1 +1,28 @@
+name: Update quarterly data
 
+on:
+  schedule:
+    - cron: "0 13 2 1,4,7,10 *"   # 2nd day after each quarter closes
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install yfinance pandas lxml html5lib requests
+      - run: python scripts/build_data.py
+      - name: Commit data.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898699+github-actions[bot]@users.noreply.github.com"
+          git add data.json
+          git diff --staged --quiet || git commit -m "Update data through latest quarter"
+          git push
