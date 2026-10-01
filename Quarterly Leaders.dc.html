@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/industry-5a41f639-a2b8-4ab7-b0c3-873e21fbab49/styles.css">
+  <script src="_ds/industry-5a41f639-a2b8-4ab7-b0c3-873e21fbab49/_ds_bundle.js"></script>
+  <style>body{margin:0;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body)}a{color:var(--color-accent-700)}a:hover{color:var(--color-accent-800)}</style>
+</helmet>
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body)">
+  <nav class="nav" style="flex-wrap:wrap">
+    <span class="nav-brand">Quarterly Leaders</span>
+    <span class="tag tag-neutral">Sample data</span>
+    <span style="font-size:13px;color:var(--color-neutral-700)">{{ statusText }}</span>
+    <button class="btn btn-secondary" onClick="{{ refresh }}">Check for new quarter</button>
+  </nav>
+
+  <sc-if value="{{ isList }}" hint-placeholder-val="{{ true }}">
+  <main style="max-width:1280px;margin:0 auto;padding:var(--space-8) var(--space-6);display:flex;flex-direction:column;gap:var(--space-8)">
+    <header style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--space-6)">
+      <div style="display:flex;flex-direction:column;gap:var(--space-2);max-width:620px">
+        <h1 style="margin:0;font-size:44px;line-height:1;text-transform:uppercase;letter-spacing:0.01em">Top 3 performers, every quarter</h1>
+        <p style="margin:0;font-size:15px;line-height:1.5;color:var(--color-neutral-700);text-wrap:pretty">Ranked by percent gain from the first trading day’s open to the last trading day’s close. Uses each index’s current members. Select a stock to analyze it.</p>
+      </div>
+      <div class="seg" role="radiogroup" aria-label="Index">
+        <sc-for list="{{ indexOpts }}" as="opt" hint-placeholder-count="4">
+          <label class="seg-opt" style="padding:9px 16px;font-size:14px">
+            <input type="radio" name="index" checked="{{ opt.checked }}" onChange="{{ opt.select }}">
+            {{ opt.label }}
+          </label>
+        </sc-for>
+      </div>
+    </header>
+
+    <sc-if value="{{ refreshNote }}" hint-placeholder-val="{{ false }}">
+      <div style="font-size:14px;color:var(--color-accent-800);background:var(--color-accent-100);padding:var(--space-3) var(--space-4);border-radius:var(--radius-sm)">{{ refreshNote }}</div>
+    </sc-if>
+
+    <div style="display:flex;flex-wrap:wrap;gap:var(--space-8);align-items:flex-start">
+      <section style="flex:3 1 620px;min-width:0;display:flex;flex-direction:column;gap:var(--space-8)">
+        <sc-for list="{{ years }}" as="yr" hint-placeholder-count="2">
+          <div style="display:flex;flex-direction:column;gap:var(--space-4)">
+            <h2 style="margin:0;font-size:28px;line-height:1;color:var(--color-accent-700)">{{ yr.year }}</h2>
+            <sc-for list="{{ yr.quarters }}" as="q" hint-placeholder-count="4">
+              <div class="blueprint" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">
+                <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+                <div style="padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-1)">
+                  <div style="font-family:var(--font-heading);font-weight:600;font-size:34px;line-height:1">{{ q.label }}</div>
+                  <sc-if value="{{ showDates }}" hint-placeholder-val="{{ true }}">
+                    <div style="font-size:12px;color:var(--color-neutral-700)">{{ q.range }}</div>
+                  </sc-if>
+                  <div style="margin-top:auto;padding-top:var(--space-3);display:flex;flex-direction:column;gap:2px">
+                    <span style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-700)">{{ indexName }}</span>
+                    <span style="font-family:var(--font-heading);font-weight:600;font-size:20px">{{ q.indexRet }}</span>
+                  </div>
+                </div>
+                <sc-for list="{{ q.picks }}" as="p" hint-placeholder-count="3">
+                  <div role="button" tabindex="0" onClick="{{ p.open }}" onKeyDown="{{ p.key }}" title="Analyze {{ p.ticker }}" style="padding:var(--space-4);border-left:1px solid var(--color-divider);display:flex;flex-direction:column;gap:var(--space-1);cursor:pointer" style-hover="background:var(--color-accent-100)">
+                    <span class="card-kicker" style="color:var(--color-accent-700)">No. {{ p.rank }}</span>
+                    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-2)">
+                      <span style="font-family:var(--font-heading);font-weight:600;font-size:24px;line-height:1.1">{{ p.ticker }}</span>
+                      <span style="font-family:var(--font-heading);font-weight:600;font-size:24px;line-height:1.1;color:var(--color-accent-700)">{{ p.ret }}</span>
+                    </div>
+                    <span style="font-size:13px;color:var(--color-neutral-700)">{{ p.name }}</span>
+                    <div style="display:flex;flex-wrap:wrap;gap:var(--space-1);margin-top:var(--space-1)">
+                      <sc-for list="{{ p.tags }}" as="t" hint-placeholder-count="0">
+                        <span class="tag tag-accent">{{ t }}</span>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </section>
+
+      <aside style="flex:1 1 300px;min-width:0;display:flex;flex-direction:column;gap:var(--space-8);position:sticky;top:var(--space-6)">
+        <div class="blueprint" style="padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-3)">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <span class="card-kicker" style="color:var(--color-accent-700)">Repeat winners · 5 years</span>
+          <div class="card-title" style="font-size:22px">{{ indexName }}</div>
+          <sc-if value="{{ hasRepeats }}" hint-placeholder-val="{{ true }}">
+            <table class="table">
+              <thead><tr><th>Ticker</th><th style="text-align:right">Times</th><th>Quarters</th></tr></thead>
+              <tbody>
+                <sc-for list="{{ repeats }}" as="r" hint-placeholder-count="5">
+                  <tr onClick="{{ r.open }}" style="cursor:pointer">
+                    <td style="font-family:var(--font-heading);font-weight:600;font-size:17px">{{ r.ticker }}</td>
+                    <td style="text-align:right;font-family:var(--font-heading);font-weight:600;font-size:17px;color:var(--color-accent-700)">{{ r.count }}</td>
+                    <td style="font-size:12px;color:var(--color-neutral-700)">{{ r.quarters }}</td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </sc-if>
+          <sc-if value="{{ noRepeats }}" hint-placeholder-val="{{ false }}">
+            <p style="margin:0;font-size:14px;color:var(--color-neutral-700)">No stock made the top 3 more than once.</p>
+          </sc-if>
+        </div>
+
+        <div class="blueprint" style="padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-3)">
+          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <span class="card-kicker" style="color:var(--color-accent-700)">Method</span>
+          <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:var(--space-2);font-size:13px;line-height:1.45;color:var(--color-neutral-800)">
+            <li>Gain = last trading day close ÷ first trading day open − 1.</li>
+            <li>Members are today’s constituents, so past quarters exclude stocks that have since left the index.</li>
+            <li>“Also” tags mark a stock that ranked top 3 in another index the same quarter.</li>
+            <li>Index return uses the same open-to-close window.</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </main>
+  </sc-if>
+
+  <sc-if value="{{ isDetail }}" hint-placeholder-val="{{ false }}">
+  <main style="max-width:1280px;margin:0 auto;padding:var(--space-6) var(--space-6) var(--space-8);display:flex;flex-direction:column;gap:var(--space-8)">
+    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--space-3)">
+      <button class="btn btn-ghost" onClick="{{ back }}">← All quarters · {{ indexName }}</button>
+      <div style="display:flex;align-items:center;gap:var(--space-2)">
+        <button class="btn btn-secondary btn-icon" onClick="{{ d.prevQ }}" disabled="{{ d.noPrev }}" aria-label="Previous quarter">←</button>
+        <select class="input" style="width:auto;min-width:220px" value="{{ d.qSel }}" onChange="{{ d.onQuarter }}" aria-label="Quarter">
+          <sc-for list="{{ d.qOpts }}" as="o" hint-placeholder-count="20">
+            <option value="{{ o.v }}">{{ o.label }}</option>
+          </sc-for>
+        </select>
+        <button class="btn btn-secondary btn-icon" onClick="{{ d.nextQ }}" disabled="{{ d.noNext }}" aria-label="Next quarter">→</button>
+      </div>
+    </div>
+
+    <header style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:var(--space-6)">
+      <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+        <div style="display:flex;flex-wrap:wrap;gap:var(--space-1)">
+          <sc-for list="{{ d.members }}" as="m" hint-placeholder-count="2">
+            <span class="tag tag-neutral">{{ m }}</span>
+          </sc-for>
+        </div>
+        <h1 style="margin:0;font-size:64px;line-height:0.95;letter-spacing:0.01em">{{ d.ticker }}</h1>
+        <div style="font-size:17px;color:var(--color-neutral-800)">{{ d.name }}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:var(--space-1)">
+        <span class="card-kicker" style="color:var(--color-accent-700)">{{ d.qLabel }} · open → close</span>
+        <span style="font-family:var(--font-heading);font-weight:600;font-size:56px;line-height:1;color:var(--color-accent-700)">{{ d.gain }}</span>
+        <div style="display:flex;flex-wrap:wrap;justify-content:flex-end;gap:var(--space-1)">
+          <sc-for list="{{ d.rankTags }}" as="t" hint-placeholder-count="1">
+            <span class="tag tag-accent">{{ t }}</span>
+          </sc-for>
+        </div>
+      </div>
+    </header>
+
+    <div class="blueprint" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <sc-for list="{{ d.stats }}" as="s" hint-placeholder-count="6">
+        <div style="padding:var(--space-4);display:flex;flex-direction:column;gap:2px;box-shadow:-1px 0 0 var(--color-divider)">
+          <span style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-700)">{{ s.label }}</span>
+          <span style="font-family:var(--font-heading);font-weight:600;font-size:24px;line-height:1.15">{{ s.value }}</span>
+          <span style="font-size:12px;color:var(--color-neutral-700)">{{ s.sub }}</span>
+        </div>
+      </sc-for>
+    </div>
+
+    <section class="blueprint" style="padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-4)">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--space-3)">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <span class="card-kicker" style="color:var(--color-accent-700)">Price history</span>
+          <span style="font-size:13px;color:var(--color-neutral-700)">{{ d.chartCaption }}</span>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:var(--space-3)">
+          <div class="seg" role="radiogroup" aria-label="Mode">
+            <sc-for list="{{ d.modeOpts }}" as="o" hint-placeholder-count="2">
+              <label class="seg-opt"><input type="radio" name="mode" checked="{{ o.checked }}" onChange="{{ o.select }}">{{ o.label }}</label>
+            </sc-for>
+          </div>
+          <div class="seg" role="radiogroup" aria-label="Range">
+            <sc-for list="{{ d.rangeOpts }}" as="o" hint-placeholder-count="4">
+              <label class="seg-opt"><input type="radio" name="range" checked="{{ o.checked }}" onChange="{{ o.select }}">{{ o.label }}</label>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <div ref="{{ d.plotRef }}" onMouseMove="{{ d.onMove }}" onMouseLeave="{{ d.onLeave }}" style="position:relative;height:340px;border-bottom:1px solid var(--color-divider);cursor:crosshair">
+        <div style="position:absolute;top:0;bottom:0;left:{{ d.band.left }}%;width:{{ d.band.width }}%;background:var(--color-accent-100)"></div>
+        <sc-for list="{{ d.yTicks }}" as="t" hint-placeholder-count="4">
+          <div style="position:absolute;left:0;right:0;top:{{ t.top }}%;border-top:1px dashed var(--color-divider)">
+            <span style="position:absolute;left:0;top:2px;font-size:11px;color:var(--color-neutral-700)">{{ t.label }}</span>
+          </div>
+        </sc-for>
+        {{ d.svg }}
+        <sc-if value="{{ d.hasHover }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;top:0;bottom:0;left:{{ d.hover.x }}%;width:1px;background:var(--color-neutral-600);pointer-events:none"></div>
+          <div style="position:absolute;left:{{ d.hover.x }}%;top:{{ d.hover.y }}%;width:9px;height:9px;margin:-5px 0 0 -5px;background:var(--color-accent-700);border:2px solid var(--color-bg);border-radius:50%;pointer-events:none"></div>
+          <div style="position:absolute;top:var(--space-2);left:{{ d.hover.boxX }}%;transform:translateX(-50%);background:var(--color-bg);border:1px solid var(--color-divider);box-shadow:var(--shadow-sm);padding:var(--space-2) var(--space-3);display:flex;flex-direction:column;gap:2px;pointer-events:none;white-space:nowrap">
+            <span style="font-size:11px;color:var(--color-neutral-700)">{{ d.hover.date }}</span>
+            <span style="font-family:var(--font-heading);font-weight:600;font-size:18px">{{ d.hover.main }}</span>
+            <span style="font-size:12px;color:var(--color-neutral-800)">{{ d.hover.sub }}</span>
+          </div>
+        </sc-if>
+        <sc-for list="{{ d.markers }}" as="m" hint-placeholder-count="0">
+          <button onClick="{{ m.pin }}" title="{{ m.title }}" style="position:absolute;bottom:var(--space-2);left:{{ m.x }}%;transform:translateX(-50%);width:20px;height:20px;padding:0;border:1px solid var(--color-accent-700);background:var(--color-bg);color:var(--color-accent-800);font:600 11px var(--font-body);cursor:pointer;border-radius:0" style-hover="background:var(--color-accent-200)">{{ m.n }}</button>
+        </sc-for>
+      </div>
+      <div style="position:relative;height:16px">
+        <sc-for list="{{ d.xLabels }}" as="x" hint-placeholder-count="4">
+          <span style="position:absolute;left:{{ x.x }}%;top:0;padding-left:4px;border-left:1px solid var(--color-divider);font-size:11px;color:var(--color-neutral-700);white-space:nowrap">{{ x.label }}</span>
+        </sc-for>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:var(--space-4);font-size:12px;color:var(--color-neutral-800)">
+        <span style="display:flex;align-items:center;gap:6px"><span style="width:18px;height:2px;background:var(--color-accent-700)"></span>{{ d.ticker }}</span>
+        <sc-if value="{{ d.compare }}" hint-placeholder-val="{{ false }}">
+          <span style="display:flex;align-items:center;gap:6px"><span style="width:18px;border-top:2px dashed var(--color-neutral-600)"></span>{{ indexName }}</span>
+        </sc-if>
+        <span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:10px;background:var(--color-accent-100)"></span>{{ d.qLabel }}</span>
+      </div>
+    </section>
+
+    <div style="display:flex;flex-wrap:wrap;gap:var(--space-8);align-items:flex-start">
+      <section class="blueprint" style="flex:1 1 340px;min-width:0;padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-4)">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <span class="card-kicker" style="color:var(--color-accent-700)">Analyst recommendations · end of {{ d.qLabel }}</span>
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-3);flex-wrap:wrap">
+          <span style="font-family:var(--font-heading);font-weight:600;font-size:36px;line-height:1">{{ d.an.consensus }}</span>
+          <span style="font-size:13px;color:var(--color-neutral-700)">{{ d.an.scoreText }}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+          <sc-for list="{{ d.an.rows }}" as="r" hint-placeholder-count="5">
+            <div style="display:grid;grid-template-columns:84px minmax(0,1fr) 28px 36px;align-items:center;gap:var(--space-2);font-size:13px">
+              <span>{{ r.label }}</span>
+              <div style="height:12px;background:var(--color-neutral-200)"><div style="height:100%;width:{{ r.w }}%;background:var(--color-accent)"></div></div>
+              <span style="text-align:right;font-weight:500">{{ r.count }}</span>
+              <span style="text-align:right;font-size:12px;color:var(--color-neutral-700)">{{ r.delta }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-3);padding-top:var(--space-3);border-top:1px solid var(--color-divider)">
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <span style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-700)">Avg. price target</span>
+            <span style="font-family:var(--font-heading);font-weight:600;font-size:24px">{{ d.an.target }}</span>
+            <span style="font-size:12px;color:var(--color-neutral-700)">{{ d.an.targetSub }}</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <span style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-700)">At quarter start</span>
+            <span style="font-family:var(--font-heading);font-weight:600;font-size:24px">{{ d.an.startConsensus }}</span>
+            <span style="font-size:12px;color:var(--color-neutral-700)">{{ d.an.startSub }}</span>
+          </div>
+        </div>
+        <span style="font-size:12px;color:var(--color-neutral-700)">Change column compares with the first day of the quarter.</span>
+      </section>
+
+      <section class="blueprint" style="flex:1.4 1 420px;min-width:0;padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-3)">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <span class="card-kicker" style="color:var(--color-accent-700)">News &amp; noteworthy events · {{ d.qLabel }}</span>
+        <div style="display:flex;flex-direction:column">
+          <sc-for list="{{ d.events }}" as="e" hint-placeholder-count="5">
+            <div role="button" tabindex="0" onClick="{{ e.pin }}" style="display:grid;grid-template-columns:24px 64px minmax(0,1fr);gap:var(--space-3);padding:var(--space-3) var(--space-2);border-top:1px solid var(--color-divider);cursor:pointer;background:{{ e.bg }}" style-hover="background:var(--color-accent-100)">
+              <span style="width:20px;height:20px;display:grid;place-items:center;border:1px solid var(--color-accent-700);color:var(--color-accent-800);font-size:11px;font-weight:600">{{ e.n }}</span>
+              <span style="font-size:13px;color:var(--color-neutral-700);padding-top:2px">{{ e.date }}</span>
+              <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2)">
+                  <span class="tag tag-neutral">{{ e.type }}</span>
+                  <span style="font-weight:500;font-size:14px">{{ e.title }}</span>
+                </div>
+                <span style="font-size:13px;line-height:1.45;color:var(--color-neutral-800);text-wrap:pretty">{{ e.detail }}</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+    </div>
+
+    <sc-if value="{{ d.hasHistory }}" hint-placeholder-val="{{ true }}">
+      <section style="display:flex;flex-direction:column;gap:var(--space-3)">
+        <span class="card-kicker" style="color:var(--color-accent-700)">Top 3 appearances · 5 years</span>
+        <div style="display:flex;flex-wrap:wrap;gap:var(--space-2)">
+          <sc-for list="{{ d.history }}" as="h" hint-placeholder-count="3">
+            <button class="btn btn-secondary" onClick="{{ h.go }}" style="font-size:13px">{{ h.label }}</button>
+          </sc-for>
+        </div>
+      </section>
+    </sc-if>
+
+    <p style="margin:0;font-size:12px;color:var(--color-neutral-700)">Sample data. Prices, analyst ratings, earnings and events are illustrative until a data source is connected.</p>
+  </main>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;defaultIndex&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;S&quot;,&quot;D&quot;,&quot;N&quot;,&quot;R&quot;],&quot;default&quot;:&quot;S&quot;,&quot;tsType&quot;:&quot;'S'|'D'|'N'|'R'&quot;},&quot;defaultRange&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Q&quot;,&quot;Q1&quot;,&quot;Y&quot;,&quot;A&quot;],&quot;default&quot;:&quot;Q&quot;,&quot;tsType&quot;:&quot;'Q'|'Q1'|'Y'|'A'&quot;},&quot;newestFirst&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;showDates&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const UNIVERSE = [
+  // ticker, name, indices (S=S&P 500, D=Dow 30, N=Nasdaq-100, R=Russell 2000), volatility
+  ['AAPL','Apple','SDN',.11],['MSFT','Microsoft','SDN',.10],['NVDA','Nvidia','SDN',.26],['AMZN','Amazon','SDN',.15],
+  ['AMGN','Amgen','SDN',.09],['CSCO','Cisco','SDN',.09],['CAT','Caterpillar','SD',.13],['GS','Goldman Sachs','SD',.13],
+  ['BA','Boeing','SD',.17],['AXP','American Express','SD',.12],['CRM','Salesforce','SD',.15],['IBM','IBM','SD',.12],
+  ['JPM','JPMorgan Chase','SD',.10],['HD','Home Depot','SD',.10],['UNH','UnitedHealth','SD',.14],['NKE','Nike','SD',.14],
+  ['DIS','Disney','SD',.13],['MMM','3M','SD',.13],['WMT','Walmart','SD',.08],['V','Visa','SD',.08],['SHW','Sherwin-Williams','SD',.11],
+  ['CVX','Chevron','SD',.11],['MRK','Merck','SD',.10],['TRV','Travelers','SD',.08],['HON','Honeywell','SD',.09],
+  ['META','Meta Platforms','SN',.22],['TSLA','Tesla','SN',.30],['AVGO','Broadcom','SN',.20],['AMD','AMD','SN',.25],
+  ['NFLX','Netflix','SN',.20],['PLTR','Palantir','SN',.36],['MU','Micron','SN',.22],['LRCX','Lam Research','SN',.20],
+  ['APP','AppLovin','SN',.40],['AXON','Axon Enterprise','SN',.20],
+  ['SMCI','Super Micro Computer','S',.42],['VST','Vistra','S',.25],['CEG','Constellation Energy','S',.22],
+  ['GE','GE Aerospace','S',.14],['ANET','Arista Networks','S',.20],['LLY','Eli Lilly','S',.15],['UBER','Uber','S',.18],
+  ['ARM','Arm Holdings','N',.32],['MSTR','Strategy','N',.48],['ASML','ASML','N',.18],['PDD','PDD Holdings','N',.26],
+  ['IONQ','IonQ','R',.55],['SOUN','SoundHound AI','R',.60],['RGTI','Rigetti Computing','R',.70],['QBTS','D-Wave Quantum','R',.70],
+  ['ACHR','Archer Aviation','R',.50],['JOBY','Joby Aviation','R',.42],['HIMS','Hims & Hers','R',.45],['CRDO','Credo Technology','R',.40],
+  ['LUNR','Intuitive Machines','R',.60],['ASTS','AST SpaceMobile','R',.60],['OKLO','Oklo','R',.65],['SMR','NuScale Power','R',.60],
+  ['UPST','Upstart','R',.55],['AEHR','Aehr Test Systems','R',.55]
+];
+const INDICES = [
+  { code:'S', label:'S&P 500', short:'S&P', beta:1, noise:.005, vol:.07 },
+  { code:'D', label:'Dow 30', short:'Dow', beta:.85, noise:.01, vol:.06 },
+  { code:'N', label:'Nasdaq-100', short:'NDX', beta:1.25, noise:.01, vol:.09 },
+  { code:'R', label:'Russell 2000', short:'R2K', beta:1.15, noise:.025, vol:.10 }
+];
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const RANGES = [{ v:'Q', label:'Quarter', pad:[0,0] }, { v:'Q1', label:'±1 qtr', pad:[1,1] }, { v:'Y', label:'1 year', pad:[2,1] }, { v:'A', label:'5 years', pad:[99,99] }];
+const RATINGS = ['Strong buy','Buy','Hold','Sell','Strong sell'];
+
+function rng(seed){ return function(){ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function hash(s){ let h=2166136261; for(const c of s){ h^=c.charCodeAt(0); h=Math.imul(h,16777619); } return h>>>0; }
+function normal(r){ return Math.sqrt(-2*Math.log(r()||1e-9))*Math.cos(2*Math.PI*r()); }
+function fmtPct(x){ const v=(x*100).toFixed(1); return (x>=0?'+':'−')+Math.abs(v)+'%'; }
+function fmtUsd(p){ return '$'+(p<10?p.toFixed(2):p<1000?p.toFixed(2):Math.round(p).toLocaleString()); }
+function isHoliday(d){ const m=d.getMonth(), n=d.getDate(); return (m===0&&n===1)||(m===6&&n===4)||(m===11&&n===25); }
+function isTrading(d){ return d.getDay()!==0&&d.getDay()!==6&&!isHoliday(d); }
+function tradingDays(y,m){ const out=[]; const d=new Date(y,m,1), end=new Date(y,m+3,0); while(d<=end){ if(isTrading(d)) out.push(new Date(d)); d.setDate(d.getDate()+1); } return out; }
+function fmtD(d){ return MON[d.getMonth()]+' '+d.getDate(); }
+function fmtDY(d){ return fmtD(d)+', '+d.getFullYear(); }
+function qShort(q){ return q.label+' ’'+String(q.year).slice(2); }
+
+function buildData(){
+  const r = rng(20261001);
+  const quarters = [];
+  for (let i=0;i<20;i++){ // Q4 2021 → Q3 2026
+    const qi = 3 + i, year = 2021 + Math.floor(qi/4), q = qi%4;
+    const mkt = .02 + .07*normal(r);
+    const rets = {};
+    UNIVERSE.forEach(([t,,,vol])=>{ const beta = vol>.3?1.4:1; rets[t] = Math.exp(beta*mkt + vol*normal(r) - vol*vol/2) - 1; });
+    const idx = {};
+    INDICES.forEach(ix=>{
+      const top = UNIVERSE.filter(u=>u[2].includes(ix.code)).map(u=>({ ticker:u[0], name:u[1], ret:rets[u[0]] }))
+        .sort((a,b)=>b.ret-a.ret).slice(0,3);
+      idx[ix.code] = { ret: Math.exp(ix.beta*mkt + ix.noise*normal(r)) - 1, top };
+    });
+    const days = tradingDays(year,q*3);
+    quarters.push({ year, q:q+1, label:'Q'+(q+1), days, range: fmtD(days[0])+' – '+fmtD(days[days.length-1]), idx, rets });
+  }
+  return quarters;
+}
+const DATA = buildData();
+
+// Daily path per quarter, bridged so open → close matches the quarterly return exactly.
+function makePath(seed, startP, vol, getRet, withEvents){
+  const r = rng(seed); let p = startP; const pts=[]; const qs=[];
+  DATA.forEach((q,qi)=>{
+    const n = q.days.length, L = Math.log(1+getRet(q)), dv = vol/Math.sqrt(63);
+    const steps = []; for(let k=0;k<n-1;k++) steps.push(dv*normal(r));
+    const earnK = 14 + Math.floor(r()*16), surprise = normal(r);
+    if(withEvents) steps[earnK-1] += (Math.sign(L)*.5 + surprise*.5)*vol*.4;
+    const adj = (L - steps.reduce((a,b)=>a+b,0))/(n-1);
+    const open = qi===0 ? p : p*(1+.006*normal(r));
+    const start = pts.length; let lp = Math.log(open);
+    pts.push({ d:q.days[0], p:open, qi });
+    for(let k=0;k<n-1;k++){ lp += steps[k]+adj; pts.push({ d:q.days[k+1], p:Math.exp(lp), qi }); }
+    p = Math.exp(lp);
+    qs.push({ start, end:pts.length-1, earn:start+earnK, surprise });
+  });
+  return { pts, qs };
+}
+const CACHE = {};
+function stockSeries(t){
+  if(CACHE[t]) return CACHE[t];
+  const u = UNIVERSE.find(x=>x[0]===t), r = rng(hash(t));
+  const start = u[2]==='R' ? 2 + r()*18 : 30 + r()*320;
+  return CACHE[t] = makePath(hash(t)+1, start, u[3], q=>q.rets[t], true);
+}
+function indexSeries(code){
+  const k='__'+code; if(CACHE[k]) return CACHE[k];
+  const ix = INDICES.find(i=>i.code===code);
+  return CACHE[k] = makePath(hash(k), 100, ix.vol, q=>q.idx[code].ret, false);
+}
+function counts(N,b){
+  b = Math.max(.12, Math.min(.95, b));
+  const sb=Math.round(N*b*.42), bu=Math.round(N*b*.38), se=Math.round(N*(1-b)*.18), ss=Math.round(N*Math.max(0,.45-b)*.2);
+  return [sb, bu, Math.max(0,N-sb-bu-se-ss), se, ss];
+}
+function consensus(c){
+  const N=c.reduce((a,b)=>a+b,0)||1, s=(5*c[0]+4*c[1]+3*c[2]+2*c[3]+c[4])/N;
+  return { s, label: s>=4.5?'Strong buy':s>=3.75?'Buy':s>=2.75?'Hold':s>=2?'Sell':'Strong sell' };
+}
+function analyst(t, qi, openP, closeP){
+  const u = UNIVERSE.find(x=>x[0]===t), r = rng(hash(t)+qi*7919), ret = DATA[qi].rets[t];
+  const N = u[2]==='R' ? 4+Math.floor(r()*8) : 18+Math.floor(r()*28);
+  const b0 = .58 + .18*normal(r), b1 = b0 + Math.max(-.5,Math.min(.5,ret))*.45;
+  const c0 = counts(N,b0), c1 = counts(N,b1);
+  const tgt0 = openP*(1.12 + .08*normal(r)), tgt1 = closeP*(1.08 + .08*normal(r) - Math.min(ret,.8)*.08);
+  const nAct = Math.max(1, Math.min(3, Math.round(Math.abs(b1-b0)*N*.6)));
+  const acts = []; for(let i=0;i<nAct;i++) acts.push({ k: 5+Math.floor(r()*50), up: b1>=b0 ? r()<.8 : r()<.2, from: 1+Math.floor(r()*2) });
+  return { c0, c1, tgt0, tgt1, acts };
+}
+
+class Component extends DCLogic {
+  state = { index:null, refreshNote:'', detail:null, range:null, mode:'price', hover:null, pin:null };
+  plotRef = React.createRef();
+
+  open(t, qi){ this._scroll = window.scrollY; this.setState({ detail:{ t, qi }, hover:null, pin:null }); window.scrollTo(0,0); }
+  setQ(qi){ if(qi<0||qi>=DATA.length) return; this.setState(s=>({ detail:{ ...s.detail, qi }, hover:null, pin:null })); }
+  back(){ this.setState({ detail:null }, ()=>window.scrollTo(0, this._scroll||0)); }
+
+  listVals(ix){
+    const newestFirst = this.props.newestFirst ?? true;
+    const qs = newestFirst ? [...DATA].reverse() : DATA;
+    const years = [];
+    qs.forEach(q=>{
+      const qi = DATA.indexOf(q);
+      let y = years.find(g=>g.year===q.year);
+      if(!y){ y={ year:q.year, quarters:[] }; years.push(y); }
+      const d = q.idx[ix.code];
+      y.quarters.push({
+        label:q.label, range:q.range, indexRet:fmtPct(d.ret),
+        picks: d.top.map((p,i)=>{
+          const tags = [];
+          INDICES.forEach(o=>{ if(o.code===ix.code) return; const k=q.idx[o.code].top.findIndex(x=>x.ticker===p.ticker); if(k>=0) tags.push('Also #'+(k+1)+' '+o.label); });
+          return { rank:i+1, ticker:p.ticker, name:p.name, ret:fmtPct(p.ret), tags,
+            open:()=>this.open(p.ticker, qi), key:e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); this.open(p.ticker, qi); } } };
+        })
+      });
+    });
+    const tally = {};
+    DATA.forEach((q,qi)=>q.idx[ix.code].top.forEach(p=>{ (tally[p.ticker] ||= []).push(qi); }));
+    const repeats = Object.entries(tally).filter(([,v])=>v.length>1)
+      .sort((a,b)=>b[1].length-a[1].length||a[0].localeCompare(b[0]))
+      .map(([t,v])=>({ ticker:t, count:v.length+'×', quarters:v.map(i=>qShort(DATA[i])).join(', '), open:()=>this.open(t, v[v.length-1]) }));
+    return { years, repeats, hasRepeats:repeats.length>0, noRepeats:repeats.length===0 };
+  }
+
+  detailVals(ix){
+    const { t, qi } = this.state.detail;
+    const u = UNIVERSE.find(x=>x[0]===t), q = DATA[qi];
+    const S = stockSeries(t), I = indexSeries(ix.code), sq = S.qs[qi];
+    const openP = S.pts[sq.start].p, closeP = S.pts[sq.end].p, ret = q.rets[t], iret = q.idx[ix.code].ret;
+    const qPts = S.pts.slice(sq.start, sq.end+1);
+    let hi=qPts[0], lo=qPts[0]; qPts.forEach(p=>{ if(p.p>hi.p) hi=p; if(p.p<lo.p) lo=p; });
+
+    const range = this.state.range ?? this.props.defaultRange ?? 'Q';
+    const R = RANGES.find(x=>x.v===range);
+    const q0 = Math.max(0, qi-R.pad[0]), q1 = Math.min(DATA.length-1, qi+R.pad[1]);
+    const a = S.qs[q0].start, b = S.qs[q1].end, n = b-a+1;
+    const compare = this.state.mode==='compare';
+    const vS = [], vI = [];
+    for(let k=a;k<=b;k++){ vS.push(compare ? S.pts[k].p/S.pts[a].p-1 : S.pts[k].p); if(compare) vI.push(I.pts[k].p/I.pts[a].p-1); }
+    const all = vS.concat(vI); let mn = Math.min(...all), mx = Math.max(...all); const span = (mx-mn)||1;
+    mn -= span*.16; mx += span*.12;
+    const X = k=>k/(n-1)*1000, Y = v=>300-(v-mn)/(mx-mn)*300;
+    const path = arr=>arr.map((v,k)=>(k?'L':'M')+X(k).toFixed(1)+' '+Y(v).toFixed(1)).join('');
+    const svg = React.createElement('svg', { viewBox:'0 0 1000 300', preserveAspectRatio:'none', style:{ position:'absolute', inset:0, width:'100%', height:'100%', overflow:'visible', pointerEvents:'none' } },
+      compare ? React.createElement('path', { d:path(vI), fill:'none', vectorEffect:'non-scaling-stroke', style:{ stroke:'var(--color-neutral-600)', strokeWidth:1.5, strokeDasharray:'5 4' } }) : null,
+      React.createElement('path', { d:path(vS), fill:'none', vectorEffect:'non-scaling-stroke', style:{ stroke:'var(--color-accent-700)', strokeWidth:2, strokeLinejoin:'round' } }));
+    const fmtV = v=>compare ? fmtPct(v) : fmtUsd(v);
+    const yTicks = [0,1,2,3].map(i=>{ const v = mx-(mx-mn)*(.08+i*.26); return { top:((300-Y(v))/300*100===0?0:(Y(v)/300*100)).toFixed(2), label:fmtV(v) }; });
+    const band = { left:((sq.start-a)/(n-1)*100).toFixed(2), width:((sq.end-sq.start)/(n-1)*100).toFixed(2) };
+    const xLabels = [];
+    for(let i=q0;i<=q1;i++){ const Q=DATA[i]; if(range==='A' && Q.q!==1 && i!==q0) continue; const x=(S.qs[i].start-a)/(n-1)*100; if(x>94) continue;
+      xLabels.push({ x:x.toFixed(2), label: range==='A' ? (Q.q===1?String(Q.year):qShort(Q)) : range==='Q' ? fmtD(Q.days[0]) : qShort(Q) }); }
+    if(range==='Q'){ [Math.round(n/3), Math.round(2*n/3)].forEach(k=>xLabels.push({ x:(k/(n-1)*100).toFixed(2), label:fmtD(S.pts[a+k].d) })); }
+
+    // Events
+    const an = analyst(t, qi, openP, closeP);
+    const ev = [];
+    const ek = sq.earn, em = S.pts[ek].p/S.pts[ek-1].p-1, sur = sq.surprise;
+    const prevQ = 'Q'+(q.q===1?4:q.q-1);
+    ev.push({ k:ek, type:'Earnings', title:prevQ+' results: EPS '+(sur>=0?'beat':'missed')+' estimates by '+Math.abs(sur*6).toFixed(1)+'%',
+      detail:'Revenue '+(sur>-.3?'ahead of':'below')+' consensus; full-year guidance '+(sur>.5?'raised':sur<-.5?'lowered':'reaffirmed')+'. Shares '+fmtPct(em)+' on the day.' });
+    an.acts.forEach(x=>{ const k=sq.start+Math.min(x.k, sq.end-sq.start); const from=RATINGS[x.from+(x.up?1:0)], to=RATINGS[x.from+(x.up?0:1)];
+      ev.push({ k, type:'Analyst', title:(x.up?'Upgrade':'Downgrade')+': '+from+' → '+to, detail:'Price target '+(x.up?'raised':'cut')+' to '+fmtUsd(S.pts[k].p*(x.up?1.2:.92))+'.' }); });
+    let up=null, dn=null;
+    for(let k=sq.start+1;k<=sq.end;k++){ if(k===ek) continue; const m=S.pts[k].p/S.pts[k-1].p-1; if(!up||m>up.m) up={k,m}; if(!dn||m<dn.m) dn={k,m}; }
+    if(up && up.m>.015) ev.push({ k:up.k, type:'Price move', title:'Largest one-day gain: '+fmtPct(up.m), detail:'Closed at '+fmtUsd(S.pts[up.k].p)+'.' });
+    if(dn && dn.m<-.015) ev.push({ k:dn.k, type:'Price move', title:'Largest one-day drop: '+fmtPct(dn.m), detail:'Closed at '+fmtUsd(S.pts[dn.k].p)+'.' });
+    if(sq.start>=120){ let prevMax=0; for(let k=Math.max(0,sq.start-252);k<sq.start;k++) prevMax=Math.max(prevMax,S.pts[k].p);
+      for(let k=sq.start;k<=sq.end;k++){ if(S.pts[k].p>prevMax){ ev.push({ k, type:'Milestone', title:'New 52-week high', detail:'First close above '+fmtUsd(prevMax)+', the prior 52-week high.' }); break; } } }
+    const hiK = sq.start + qPts.indexOf(hi);
+    if(!ev.some(e=>e.k===hiK)) ev.push({ k:hiK, type:'Milestone', title:'Quarter high', detail:'Peaked at '+fmtUsd(hi.p)+', '+fmtPct(hi.p/openP-1)+' from the quarter open.' });
+    ev.sort((x,y)=>x.k-y.k);
+    const pinK = this.state.pin;
+    const events = ev.map((e,i)=>({ n:i+1, date:fmtD(S.pts[e.k].d), type:e.type, title:e.title, detail:e.detail, bg: pinK===e.k?'var(--color-accent-100)':'transparent', pin:()=>this.setState({ pin:e.k }) }));
+    const markers = ev.filter(e=>e.k>=a&&e.k<=b).map((e,i)=>({ n:ev.indexOf(e)+1, x:((e.k-a)/(n-1)*100).toFixed(2), title:e.title, pin:()=>this.setState({ pin:e.k }) }));
+
+    // Hover readout
+    const hk = this.state.hover ?? pinK;
+    let hover = null;
+    if(hk!=null && hk>=a && hk<=b){
+      const i = hk-a, xp = i/(n-1)*100, pt = S.pts[hk];
+      hover = { x:xp.toFixed(2), y:(Y(vS[i])/300*100).toFixed(2), boxX:Math.max(9,Math.min(91,xp)).toFixed(2), date:fmtDY(pt.d),
+        main: compare ? t+' '+fmtPct(vS[i]) : fmtUsd(pt.p),
+        sub: compare ? ix.short+' '+fmtPct(vI[i]) : fmtPct(pt.p/openP-1)+' vs '+q.label+' open' };
+    }
+
+    const rows = RATINGS.map((l,i)=>{ const dlt=an.c1[i]-an.c0[i]; return { label:l, count:an.c1[i], delta: dlt===0?'—':(dlt>0?'+':'−')+Math.abs(dlt), w:(an.c1[i]/Math.max(...an.c1)*100).toFixed(1) }; });
+    const cs1 = consensus(an.c1), cs0 = consensus(an.c0), N = an.c1.reduce((x,y)=>x+y,0);
+
+    const rankTags = [];
+    INDICES.forEach(o=>{ const k=q.idx[o.code].top.findIndex(x=>x.ticker===t); if(k>=0) rankTags.push('No. '+(k+1)+' '+o.label); });
+    const history = [];
+    DATA.forEach((Q,i)=>{ const parts=[]; INDICES.forEach(o=>{ const k=Q.idx[o.code].top.findIndex(x=>x.ticker===t); if(k>=0) parts.push('#'+(k+1)+' '+o.short); }); if(parts.length) history.push({ label:qShort(Q)+' · '+parts.join(', '), go:()=>this.setQ(i) }); });
+
+    return {
+      ticker:t, name:u[1], members: INDICES.filter(o=>u[2].includes(o.code)).map(o=>o.label),
+      qLabel: q.label+' '+q.year, gain: fmtPct(ret), rankTags,
+      qSel: String(qi), qOpts: DATA.map((Q,i)=>({ v:String(i), label:Q.label+' '+Q.year+' · '+Q.range })).reverse(),
+      onQuarter: e=>this.setQ(+e.target.value), prevQ:()=>this.setQ(qi-1), nextQ:()=>this.setQ(qi+1), noPrev: qi===0, noNext: qi===DATA.length-1,
+      stats: [
+        { label:'Open', value:fmtUsd(openP), sub:fmtD(q.days[0]) },
+        { label:'Close', value:fmtUsd(closeP), sub:fmtD(q.days[q.days.length-1]) },
+        { label:'Gain', value:fmtPct(ret), sub:'open → close' },
+        { label:'vs '+ix.short, value:(ret-iret>=0?'+':'−')+Math.abs((ret-iret)*100).toFixed(1)+' pts', sub:ix.label+' '+fmtPct(iret) },
+        { label:'Quarter high', value:fmtUsd(hi.p), sub:fmtD(hi.d) },
+        { label:'Quarter low', value:fmtUsd(lo.p), sub:fmtD(lo.d) }
+      ],
+      chartCaption: (compare ? '% change from '+fmtDY(S.pts[a].d)+', vs '+ix.label : 'Daily close, '+fmtDY(S.pts[a].d)+' – '+fmtDY(S.pts[b].d)) + ' · hover to inspect',
+      modeOpts: [{ v:'price', label:'Price' }, { v:'compare', label:'% vs '+ix.short }].map(o=>({ label:o.label, checked:this.state.mode===o.v, select:()=>this.setState({ mode:o.v }) })),
+      rangeOpts: RANGES.map(o=>({ label:o.label, checked:range===o.v, select:()=>this.setState({ range:o.v }) })),
+      plotRef: this.plotRef, svg, yTicks, band, xLabels, markers, compare,
+      hasHover: !!hover, hover: hover || { x:0, y:0, boxX:0, date:'', main:'', sub:'' },
+      onMove: e=>{ const el=this.plotRef.current; if(!el) return; const rc=el.getBoundingClientRect(); const f=Math.max(0,Math.min(1,(e.clientX-rc.left)/rc.width)); const k=a+Math.round(f*(n-1)); if(k!==this.state.hover) this.setState({ hover:k }); },
+      onLeave: ()=>this.setState({ hover:null }),
+      an: { consensus:cs1.label, scoreText: cs1.s.toFixed(2)+' / 5 · '+N+' analysts', rows,
+        target: fmtUsd(an.tgt1), targetSub: fmtPct(an.tgt1/closeP-1)+' vs close · was '+fmtUsd(an.tgt0),
+        startConsensus: cs0.label, startSub: cs0.s.toFixed(2)+' / 5 on '+fmtD(q.days[0]) },
+      events, history, hasHistory: history.length>0
+    };
+  }
+
+  renderVals() {
+    const code = this.state.index ?? this.props.defaultIndex ?? 'S';
+    const ix = INDICES.find(i=>i.code===code) || INDICES[0];
+    const last = DATA[DATA.length-1];
+    const isDetail = !!this.state.detail;
+    return {
+      indexName: ix.label, isList: !isDetail, isDetail,
+      indexOpts: INDICES.map(i=>({ label:i.label, checked:i.code===ix.code, select:()=>this.setState({ index:i.code }) })),
+      ...this.listVals(ix),
+      d: isDetail ? this.detailVals(ix) : {},
+      back: ()=>this.back(),
+      showDates: this.props.showDates ?? true,
+      statusText: 'Through '+last.label+' '+last.year+' · next quarter closes Dec 31, 2026',
+      refreshNote: this.state.refreshNote,
+      refresh: ()=>this.setState({ refreshNote: 'Up to date. Q4 2026 is still in progress — it will be added after the close on Dec 31, 2026.' })
+    };
+  }
+}
+</script>
+</body>
+</html>
