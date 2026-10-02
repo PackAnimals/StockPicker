@@ -36,27 +36,54 @@ def get(url):
     raise RuntimeError("failed to fetch " + url)
 
 
-def wiki_table(url, col, lo, hi):
-    for t in pd.read_html(io.StringIO(get(url))):
-        if col in [str(c) for c in t.columns] and lo <= len(t) <= hi:
-            return t
-    raise RuntimeError(f"no table with column {col} at {url}")
+def flat_cols(t):
+    if isinstance(t.columns, pd.MultiIndex):
+        t.columns = [str(c[-1]) for c in t.columns]
+    t.columns = [str(c).split("[")[0].strip() for c in t.columns]
+    return t
+
+
+def wiki_members(url, lo, hi, sym_cols=("Symbol", "Ticker", "Ticker symbol"), name_cols=("Security", "Company", "Name")):
+    """Find the constituents table on a Wikipedia page and return {ticker: name}."""
+    tables = pd.read_html(io.StringIO(get(url)))
+    for t in tables:
+        t = flat_cols(t)
+        lower = {c.lower(): c for c in t.columns}
+        sym = next((lower[c.lower()] for c in sym_cols if c.lower() in lower), None)
+        if sym is None or not (lo <= len(t) <= hi):
+            continue
+        name = next((lower[c.lower()] for c in name_cols if c.lower() in lower), t.columns[0])
+        out = {}
+        for _, r in t.iterrows():
+            s = str(r[sym]).split(":")[-1].strip()  # handles "NYSE: MMM"
+            if s and s.lower() != "nan":
+                out[norm(s)] = str(r[name])
+        if lo <= len(out) <= hi:
+            return out
+    print("tables found at", url)
+    for t in tables:
+        print("  ", len(t), "rows:", list(t.columns)[:8])
+    raise RuntimeError(f"no constituents table at {url}")
 
 
 def sp500():
-    t = wiki_table("https://en.wikipedia.org/wiki/List_of_S%26P_500_companies", "Symbol", 480, 520)
-    return {norm(r["Symbol"]): str(r["Security"]) for _, r in t.iterrows()}
+    return wiki_members("https://en.wikipedia.org/wiki/List_of_S%26P_500_companies", 480, 520)
 
 
 def ndx():
-    t = wiki_table("https://en.wikipedia.org/wiki/Nasdaq-100", "Ticker", 95, 110)
-    name = "Company" if "Company" in t.columns else t.columns[0]
-    return {norm(r["Ticker"]): str(r[name]) for _, r in t.iterrows()}
+    return wiki_members("https://en.wikipedia.org/wiki/Nasdaq-100", 95, 110)
 
 
-def dow():
-    t = wiki_table("https://en.wikipedia.org/wiki/Dow_Jones_Industrial_Average", "Symbol", 29, 31)
-    return {norm(r["Symbol"]): str(r["Company"]) for _, r in t.iterrows()}
+DOW_FALLBACK = ["AAPL", "AMGN", "AMZN", "AXP", "BA", "CAT", "CRM", "CSCO", "CVX", "DIS", "GS", "HD", "HON", "IBM", "JNJ",
+                "JPM", "KO", "MCD", "MMM", "MRK", "MSFT", "NKE", "NVDA", "PG", "SHW", "TRV", "UNH", "V", "VZ", "WMT"]
+
+
+def dow(sp_names):
+    try:
+        return wiki_members("https://en.wikipedia.org/wiki/Dow_Jones_Industrial_Average", 28, 32)
+    except Exception as e:  # noqa: BLE001
+        print("WARNING: Dow table not found, using built-in member list:", e)
+        return {t: sp_names.get(t, t) for t in DOW_FALLBACK}
 
 
 def r2000():
@@ -177,7 +204,15 @@ def clean(o):
 
 
 def main():
-    lists = {"S": sp500(), "D": dow(), "N": ndx(), "R": r2000()}
+    def safe(fn, label):
+        try:
+            return fn()
+        except Exception as e:  # noqa: BLE001
+            print(f"WARNING: could not load {label} members, skipping:", e)
+            return {}
+
+    sp = sp500()
+    lists = {"S": sp, "D": dow(sp), "N": safe(ndx, "Nasdaq-100"), "R": safe(r2000, "Russell 2000")}
     names, members = {}, {}
     for code, d in lists.items():
         print(code, len(d), "members")
