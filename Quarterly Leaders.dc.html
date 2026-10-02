@@ -67,6 +67,7 @@
                       <span style="font-family:var(--font-heading);font-weight:600;font-size:24px;line-height:1.1;color:var(--color-accent-700)">{{ p.ret }}</span>
                     </div>
                     <span style="font-size:13px;color:var(--color-neutral-700)">{{ p.name }}</span>
+                    <span style="font-size:12px;color:var(--color-neutral-800)">{{ p.rating }}</span>
                     <div style="display:flex;flex-wrap:wrap;gap:var(--space-1);margin-top:var(--space-1)">
                       <sc-for list="{{ p.tags }}" as="t" hint-placeholder-count="0">
                         <span class="tag tag-accent">{{ t }}</span>
@@ -488,7 +489,10 @@ class Component extends DCLogic {
         picks: d.top.map((p,i)=>{
           const tags=[];
           INDICES.forEach(o=>{ if(o.code===ix.code) return; const k=q.idx[o.code].top.findIndex(x=>x.ticker===p.ticker); if(k>=0) tags.push('Also #'+(k+1)+' '+o.label); });
-          return { rank:i+1, ticker:p.ticker, name:p.name, ret:fmtPct(p.ret), tags,
+          const an=M.analyst(p.ticker, qi), c=an?an.c1:null, N=c?c.reduce((x,y)=>x+y,0):0;
+          let rating='Analysts: no ratings';
+          if(N){ const top=c.indexOf(Math.max(...c)); rating='Analysts: '+RATINGS[top]+' ('+c[top]+' of '+N+')'; }
+          return { rank:i+1, ticker:p.ticker, name:p.name, ret:fmtPct(p.ret), tags, rating,
             open:()=>this.open(p.ticker, qi), key:e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); this.open(p.ticker, qi); } } };
         })
       });
