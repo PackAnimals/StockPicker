@@ -18,16 +18,21 @@ import yfinance as yf
 N_QUARTERS = 20
 INDEX_SYMBOLS = {"S": "^GSPC", "D": "^DJI", "N": "^NDX", "R": "^RUT"}
 UA = {"User-Agent": "Mozilla/5.0 (compatible; StockPicker/1.0; +https://github.com/PackAnimals/StockPicker)"}
+BROWSER = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+    "Accept": "text/html,application/json,text/csv,*/*",
+    "Accept-Language": "en-US,en;q=0.9",
+}
 
 
 def norm(t):
     return str(t).strip().upper().replace(".", "-").replace("/", "-")
 
 
-def get(url):
+def get(url, headers=UA):
     for i in range(3):
         try:
-            r = requests.get(url, headers=UA, timeout=60)
+            r = requests.get(url, headers=headers, timeout=60)
             r.raise_for_status()
             return r.text
         except Exception as e:  # noqa: BLE001
@@ -71,7 +76,16 @@ def sp500():
 
 
 def ndx():
-    return wiki_members("https://en.wikipedia.org/wiki/Nasdaq-100", 95, 110)
+    try:
+        return wiki_members("https://en.wikipedia.org/wiki/Nasdaq-100", 95, 110)
+    except Exception as e:  # noqa: BLE001
+        print("Nasdaq-100 Wikipedia failed, trying nasdaq.com:", e)
+    j = json.loads(get("https://api.nasdaq.com/api/quote/list-type/nasdaq100", BROWSER))
+    rows = (j.get("data") or {}).get("data", {}).get("rows") or []
+    out = {norm(r["symbol"]): str(r.get("companyName") or r["symbol"]) for r in rows if r.get("symbol")}
+    if len(out) < 90:
+        raise RuntimeError(f"nasdaq.com returned {len(out)} members")
+    return out
 
 
 DOW_FALLBACK = ["AAPL", "AMGN", "AMZN", "AXP", "BA", "CAT", "CRM", "CSCO", "CVX", "DIS", "GS", "HD", "HON", "IBM", "JNJ",
@@ -90,10 +104,17 @@ def r2000():
     # iShares Russell 2000 ETF (IWM) holdings = current Russell 2000 members
     url = ("https://www.ishares.com/us/products/239710/ishares-russell-2000-etf/1467271812596.ajax"
            "?fileType=csv&fileName=IWM_holdings&dataType=fund")
-    lines = get(url).splitlines()
-    start = next(i for i, l in enumerate(lines) if l.startswith("Ticker"))
+    txt = get(url, BROWSER).lstrip("\ufeff")
+    lines = txt.splitlines()
+    start = next((i for i, l in enumerate(lines) if l.lstrip('\ufeff"').startswith("Ticker")), None)
+    if start is None:
+        raise RuntimeError("iShares response had no Ticker header. First 300 chars: " + txt[:300])
     df = pd.read_csv(io.StringIO("\n".join(lines[start:])), on_bad_lines="skip")
-    df = df[df["Asset Class"] == "Equity"]
+    df.columns = [str(c).strip().strip('"') for c in df.columns]
+    if "Asset Class" in df.columns:
+        df = df[df["Asset Class"] == "Equity"]
+    if len(df) < 1500:
+        raise RuntimeError(f"iShares returned only {len(df)} equity rows")
     out = {}
     for _, r in df.iterrows():
         t = r["Ticker"]
